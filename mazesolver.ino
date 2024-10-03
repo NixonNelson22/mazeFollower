@@ -1,5 +1,5 @@
-
-#include<Hashtable.h>
+//#include <LinkedList.h>
+// assuming a 6x6 or 7x7 grid / 154 or 196 so safe 600
 //Line following code
 // Motor control pins
 const int AIN1 = 7;
@@ -29,6 +29,7 @@ int previousError = 0;
 int P, D, I, error;
 int lsp, rsp;
 int lfspeed = 230;
+
 
 void setup() {
   // Initialize motor control pins
@@ -62,7 +63,7 @@ void loop() {
   //// goal is # square 
   //// has to be stored in memory
   get_Input();
-  
+  floodfill();
   // localization 
   //// get data from mapping and check if we are in correct place
   //// path error correction
@@ -150,18 +151,14 @@ void get_Input(){
   for (int i = 0; i < 6; i++) {
     sensorDigitalValues[i] = analogRead(sensorPins[i]) < threshold ? 0 : 1;
   }
-
-//  hashmap 
-//  key : value 
-    Hashtable<String, int> myhashtable;
-
+}
   // check which landmark reached in which orientation 
 //  if rightmostdetects and left most doesent{
 //     the landmark is L with one adjacent node 
 //     and turns to the right 
 //      __.
 //        |
-     myhashtable.put(1,"LR");
+//    myhashtable.put(1,"LR");
 //    }
 //  if rightmostdoesnt and leftmostdetects{
 //      the landmark is L with one adjacent node 
@@ -189,7 +186,25 @@ void get_Input(){
 //    put(i+1,/)
 //    }
 //
+void floodfill(){
+	// start
+	// stack node distance visited dir
+	// T and + is a branch node 
+	// # switches modes when in short path mode
+	// initial value 
+	int head[50]; 
+	char node[600] ;
+	float distance[600];
+	bool visited[600];
+	char dir[600];
 
+  node[0]= 'o';
+  distance[0]= 0.0;
+  visited[0]= true;
+  dir[0]= ' ';
+  head[0]= 0;
 
+  robot_control('F')
 
+  
 }
