@@ -1,20 +1,19 @@
-//#include <LinkedList.h>
 // assuming a 6x6 or 7x7 grid / 154 or 196 so safe 600
 //Line following code
-// Motor control pins
-const int AIN1 = 7;
-const int AIN2 = 8;
-const int PWMA = 6;
-const int BIN1 = 9;
-const int BIN2 = 10;
-const int PWMB = 11;
-const int STBY = 12;  // Define STBY pin
+// Motor control pins for MX1508
+const int PWMA1 = 6;
+const int PWMA2 = 9;
+const int PWMB1 = 11;
+const int PWMB2 = 10;
 
 // Define the pins for TCRT5000 sensors
-const int sensorPins[6] = {A1, A2, A3, A4, A5, A6};
-int sensorAnalogValues[6];
-int sensorDigitalValues[6];
+const int sensorPins[5] = {A0, A1, A2, A3, A6};
+int sensorAnalogValues[5];
+int sensorDigitalValues[5];
 int threshold = 500;  // Threshold for detecting black line
+const int leftmostsensor = A6;
+const int rightmostsensor = A0;
+const int centersensor = A2;
 
 // PID control variables
 float Kp = 0.7;
@@ -33,15 +32,11 @@ int lfspeed = 230;
 
 void setup() {
   // Initialize motor control pins
-  pinMode(AIN1, OUTPUT);
-  pinMode(AIN2, OUTPUT);
-  pinMode(PWMA, OUTPUT);
-  pinMode(BIN1, OUTPUT);
-  pinMode(BIN2, OUTPUT);
-  pinMode(PWMB, OUTPUT);
 
-  // Disable standby mode
-  digitalWrite(STBY, HIGH);
+  pinMode(PWMA1, OUTPUT);
+  pinMode(PWMA2, OUTPUT);
+  pinMode(PWMB1, OUTPUT);
+  pinMode(PWMB2, OUTPUT);
 
   // Initialize sensor pins
   for (int i = 0; i < 6; i++) {
@@ -55,21 +50,27 @@ void setup() {
 void loop() {
   // mobility script
   //// controlled by localization and path algo
-  robot_control();
   // mapping 
   //// get encoder data and approximate the values to a 2d matrix
   //// landmarks are +,L,O,# sections
   //// straight | sections
   //// goal is # square 
   //// has to be stored in memory
-  get_Input();
-  floodfill();
   // localization 
   //// get data from mapping and check if we are in correct place
   //// path error correction
   
   // shortest path algo
   //// find the shortest path from mapping
+
+
+  get_Input();
+  floodfill();
+  // start polling data from line sensor
+
+  // check if bot is in goal
+
+  // check if no line found  
   
 }
 
@@ -125,67 +126,59 @@ void PID_Linefollow(int error) {
 
 void motor_drive(int left, int right) {
   if (right > 0) {
-    digitalWrite(BIN1, HIGH);
-    digitalWrite(BIN2, LOW);
-    analogWrite(PWMB, right);
+    analogWrite(PWMB1, right);
   } else {
-    digitalWrite(BIN1, LOW);
-    digitalWrite(BIN2, HIGH);
-    analogWrite(PWMB, -right);
+    analogWrite(PWMB2, -right);
   }
-
   if (left > 0) {
-    digitalWrite(AIN1, HIGH);
-    digitalWrite(AIN2, LOW);
-    analogWrite(PWMA, left);
+    analogWrite(PWMA1, left);
   } else {
-    digitalWrite(AIN1, LOW);
-    digitalWrite(AIN2, HIGH);
-    analogWrite(PWMA, -left);
+    analogWrite(PWMA2, -left);
   }
 }
 
 //mapping 
 
-void get_Input(){
+void symbolDetected(){
   for (int i = 0; i < 6; i++) {
     sensorDigitalValues[i] = analogRead(sensorPins[i]) < threshold ? 0 : 1;
+
+	// check which landmark reached in which orientation 
+	//  if rightmostdetects and left most doesent{
+	//     the landmark is L with one adjacent node 
+	//     and turns to the right 
+	//      __.
+	//        |
+	//    myhashtable.put(1,"LR");
+	//    }
+	//  if rightmostdoesnt and leftmostdetects{
+	//      the landmark is L with one adjacent node 
+	//      and turns to the left
+	//      .__
+	//      |
+	//    put(i+1,LL)
+	//    }
+	//  if rightmostdetects and leftmostdetects or rightmostdetects and left most doesnt and line in front after delay or rightmostdoesent and leftmostdetects and line in front after {
+	//     the landmark is T with 2 adjacent nodes
+	//     can turn 2 ways
+	//      --| |-- ``:`` _|_
+	//    put(i+1,T*)
+	//    }
+	//  if rightmostdetects and leftmostdetects and line in front after delay {
+	//       the landmark is a +
+	//    put(i+1,+)
+	//    }
+	//  if all sensors detect for some delay {
+	//    the goal is reached landmark is #
+	//    put(i+1,#)
+	//    }
+	//  if front sensor detects no line{
+	//     the lankdmark is / dead end
+	//    put(i+1,/)
+	//    }
+	//
   }
 }
-  // check which landmark reached in which orientation 
-//  if rightmostdetects and left most doesent{
-//     the landmark is L with one adjacent node 
-//     and turns to the right 
-//      __.
-//        |
-//    myhashtable.put(1,"LR");
-//    }
-//  if rightmostdoesnt and leftmostdetects{
-//      the landmark is L with one adjacent node 
-//      and turns to the left
-//      .__
-//      |
-//    put(i+1,LL)
-//    }
-//  if rightmostdetects and leftmostdetects or rightmostdetects and left most doesnt and line in front after delay or rightmostdoesent and leftmostdetects and line in front after {
-//     the landmark is T with 2 adjacent nodes
-//     can turn 2 ways
-//      --| |-- ``:`` _|_
-//    put(i+1,T*)
-//    }
-//  if rightmostdetects and leftmostdetects and line in front after delay {
-//       the landmark is a +
-//    put(i+1,+)
-//    }
-//  if all sensors detect for some delay {
-//    the goal is reached landmark is #
-//    put(i+1,#)
-//    }
-//  if front sensor detects no line{
-//     the lankdmark is / dead end
-//    put(i+1,/)
-//    }
-//
 void floodfill(){
 	// start
 	// stack node distance visited dir
@@ -204,7 +197,20 @@ void floodfill(){
   dir[0]= ' ';
   head[0]= 0;
 
-  robot_control('F')
+  robot_control('F'); // first move 
+  i = 1;
+  if(symbolDetected())
+	  robot_control('brake');
+	  while(){
+		// record node
+		node[i++] = detected_symbol();
+		distance[i++] = speedsensor();
+		dir[i++] = mpu();
+		visited[i++] = true;
+		
+		if
+
+	  }
 
   
 }
